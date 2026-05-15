@@ -120,8 +120,8 @@ opendoor-agent/
 | `GEMINI_API_KEY`    | Gemini API key (required)                | —                                                                          |
 | `RESUME_PATH`       | Path to your resume PDF                  | `./resume.pdf`                                                             |
 | `JOB_URL`           | Target job application URL               | Rippling URL (hardcoded)                                                   |
-| `ADK_MODEL`         | Model for ADK chat layer                 | `gemini-2.0-flash`                                                         |
-| `STAGEHAND_MODEL`   | Model for Stagehand browser agent        | `google/gemini-2.0-flash`                                                  |
+| `ADK_MODEL`         | Model for ADK chat layer                 | `gemini-flash-lite-latest`                                                 |
+| `STAGEHAND_MODEL`   | Model for Stagehand browser agent        | `google/gemini-flash-lite-latest`                                          |
 
 ---
 

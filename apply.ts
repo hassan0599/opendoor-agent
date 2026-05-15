@@ -83,7 +83,7 @@ export async function runApplication(
   loadEnv()
 
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY
-  const STAGEHAND_MODEL = process.env.STAGEHAND_MODEL ?? 'google/gemini-2.0-flash'
+  const STAGEHAND_MODEL = process.env.STAGEHAND_MODEL ?? 'google/gemini-flash-lite-latest'
   const resumePath =
     opts.resumePath ?? process.env.RESUME_PATH ?? './resume.pdf'
   const jobUrl =

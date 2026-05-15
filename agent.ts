@@ -195,7 +195,7 @@ const submitApplication = new FunctionTool({
  * ADK uses Gemini. Set GEMINI_API_KEY in .env and optionally ADK_MODEL
  * to override the default model.
  */
-const ADK_MODEL = process.env.ADK_MODEL ?? 'gemini-2.0-flash'
+const ADK_MODEL = process.env.ADK_MODEL ?? 'gemini-flash-lite-latest'
 
 export const rootAgent = new LlmAgent({
   name: 'job_application_assistant',
