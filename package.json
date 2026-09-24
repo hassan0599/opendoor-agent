@@ -6,13 +6,14 @@
   "scripts": {
     "apply": "tsx apply.ts",
     "chat": "npx adk run agent.ts",
-    "web": "npx adk web"
+    "web": "npx adk web",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@browserbasehq/stagehand": "^3.0.0",
     "@google/adk": "^1.0.0",
     "pdf-parse": "^1.1.1",
-    "zod": "^3.22.4"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@google/adk-devtools": "^1.0.0",

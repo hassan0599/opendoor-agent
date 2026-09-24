@@ -14,13 +14,10 @@
 import {
   FunctionTool,
   LlmAgent,
-  InMemorySessionService,
-  Runner,
 } from '@google/adk'
-import { z } from 'zod'
-import { loadEnv, runApplication, ExtraUserInfo, RunApplicationResult } from './apply.js'
+import { z } from 'zod/v3'
+import { loadEnv, runApplication, ExtraUserInfo } from './apply.js'
 import { parseResume } from './resumeParser.js'
-import path from 'path'
 
 // Load .env so OPENROUTER_API_KEY etc. are available when the tool fires
 loadEnv()

@@ -58,7 +58,7 @@ export interface RunApplicationResult {
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export function loadEnv() {
-  const envPath = path.resolve(__dirname, '../.env')
+  const envPath = path.resolve(__dirname, '.env')
   if (fs.existsSync(envPath)) {
     const lines = fs.readFileSync(envPath, 'utf-8').split('\n')
     for (const line of lines) {
@@ -84,8 +84,9 @@ export async function runApplication(
 
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY
   const STAGEHAND_MODEL = process.env.STAGEHAND_MODEL ?? 'google/gemini-flash-lite-latest'
-  const resumePath =
-    opts.resumePath ?? process.env.RESUME_PATH ?? './resume.pdf'
+  const resumePath = path.resolve(
+    opts.resumePath ?? process.env.RESUME_PATH ?? './resume.pdf',
+  )
   const jobUrl =
     opts.jobUrl ??
     process.env.JOB_URL ??
@@ -105,7 +106,8 @@ export async function runApplication(
     console.log('Resume text length:', resume.rawText.length, 'characters')
   } catch (error) {
     console.error('❌ Resume parsing failed:', error)
-    throw new Error(`Resume parsing failed: ${error.message}`)
+    const msg = error instanceof Error ? error.message : String(error)
+    throw new Error(`Resume parsing failed: ${msg}`)
   }
 
   console.log('\n🚀 Starting Stagehand in LOCAL mode …')
@@ -127,22 +129,24 @@ export async function runApplication(
     console.log('✅ Browser launched')
   } catch (error) {
     console.error('❌ Stagehand initialization failed:', error)
-    throw new Error(`Stagehand failed to initialize: ${error.message}`)
+    const msg = error instanceof Error ? error.message : String(error)
+    throw new Error(`Stagehand failed to initialize: ${msg}`)
   }
 
   const page = stagehand.context.pages()[0]!
 
-  // 3. Navigate to the form
-  console.log(`\n🌐 Navigating to: ${jobUrl}`)
-  await page.goto(jobUrl, { waitUntil: 'networkidle' })
-  console.log('✅ Page loaded')
+  try {
+    // 3. Navigate to the form
+    console.log(`\n🌐 Navigating to: ${jobUrl}`)
+    await page.goto(jobUrl, { waitUntil: 'networkidle' })
+    console.log('✅ Page loaded')
 
-  // 4. Build prompts with resume + extra info merged in
-  const systemPrompt = buildSystemPrompt(resume.rawText, extraInfo)
-  const instruction = buildInstruction(resumePath, extraInfo)
+    // 4. Build prompts with resume + extra info merged in
+    const systemPrompt = buildSystemPrompt(resume.rawText, extraInfo)
+    const instruction = buildInstruction(resumePath, extraInfo)
 
-  // 5. Run the agent with extended instruction for autonomous file upload
-  const enhancedInstruction = `${instruction}
+    // 5. Run the agent with extended instruction for autonomous file upload
+    const enhancedInstruction = `${instruction}
 
 FILE UPLOAD HANDLING:
 - When you encounter a file upload field (resume/CV), use the browser's file chooser.
@@ -155,41 +159,42 @@ ERROR REPORTING:
 - If submission fails, note the exact error message shown.
 - If you get stuck, describe what prevented completion.`
 
-  const agent = stagehand.agent({ systemPrompt })
+    const agent = stagehand.agent({ systemPrompt })
 
-  console.log('\n🤖 Browser agent starting …\n')
-  const result = await agent.execute({ instruction: enhancedInstruction, maxSteps: 50 })
+    console.log('\n🤖 Browser agent starting …\n')
+    const result = await agent.execute({ instruction: enhancedInstruction, maxSteps: 50 })
 
-  console.log('\n✅ Browser agent finished.')
-  console.log('Result:', result)
+    console.log('\n✅ Browser agent finished.')
+    console.log('Result:', result)
 
-  // Analyze result for issues
-  const resultStr = typeof result === 'string' ? result : JSON.stringify(result)
-  const issues = analyzeResultForIssues(resultStr)
+    // Analyze result for issues
+    const resultStr = typeof result === 'string' ? result : JSON.stringify(result)
+    const issues = analyzeResultForIssues(resultStr)
 
-  // Don't close browser if there are issues - user may need to interact
-  if (issues.length > 0) {
-    console.log('\n⚠️ Issues detected - keeping browser open for user intervention')
-    console.log('Issues:', issues)
-    // Keep browser open longer for user to see and potentially fix
-    await new Promise((r) => setTimeout(r, 60_000))
-  } else {
-    console.log('\n👀 Browser stays open 30s for review …')
-    await new Promise((r) => setTimeout(r, 30_000))
-  }
+    // Don't close browser if there are issues - user may need to interact
+    if (issues.length > 0) {
+      console.log('\n⚠️ Issues detected - keeping browser open for user intervention')
+      console.log('Issues:', issues)
+      // Keep browser open longer for user to see and potentially fix
+      await new Promise((r) => setTimeout(r, 60_000))
+    } else {
+      console.log('\n👀 Browser stays open 30s for review …')
+      await new Promise((r) => setTimeout(r, 30_000))
+    }
 
-  await stagehand.close()
+    // Determine if we need user input
+    const needsUserInput = issues.length > 0 && !resultStr.toLowerCase().includes('submitted')
+    const hasSuccess = resultStr.toLowerCase().includes('submitted') || resultStr.toLowerCase().includes('confirmation')
 
-  // Determine if we need user input
-  const needsUserInput = issues.length > 0 && !resultStr.toLowerCase().includes('submitted')
-  const hasSuccess = resultStr.toLowerCase().includes('submitted') || resultStr.toLowerCase().includes('confirmation')
-
-  return {
-    success: hasSuccess && issues.length === 0,
-    message: resultStr,
-    needsUserInput,
-    issues: issues.length > 0 ? issues : undefined,
-    partialSuccess: hasSuccess && issues.length > 0,
+    return {
+      success: hasSuccess && issues.length === 0,
+      message: resultStr,
+      needsUserInput,
+      issues: issues.length > 0 ? issues : undefined,
+      partialSuccess: hasSuccess && issues.length > 0,
+    }
+  } finally {
+    await stagehand.close()
   }
 }
 

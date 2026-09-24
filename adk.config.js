@@ -2,7 +2,7 @@ export default {
   apps: [
     {
       name: 'job_application_assistant',
-      path: './src/agent.ts',
+      path: './agent.ts',
       description:
         'Conversational assistant that collects missing personal info and then automatically fills out and submits a job application form.',
     },
